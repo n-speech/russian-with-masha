@@ -1,0 +1,31 @@
+{
+  "name": "russian-with-masha",
+  "version": "1.0.0",
+  "description": "russian language school for french learners",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/n-speech/russian-with-masha.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/n-speech/russian-with-masha/issues"
+  },
+  "homepage": "https://github.com/n-speech/russian-with-masha#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.10",
+    "pg": "^8.21.0"
+  }
+}

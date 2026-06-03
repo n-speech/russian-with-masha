@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Админка</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --yellow: #FFD966;
+      --gray: #f0f2f5;
+      --border: #e4e6ea;
+      --text: #1c1e21;
+      --muted: #65676b;
+      --white: #ffffff;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray); color: var(--text); padding: 20px;
+    }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; margin-top: 32px; }
+    .card {
+      background: var(--white); border-radius: 16px;
+      padding: 20px; margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .student-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+    .student-email { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .course-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 0; border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .course-name { font-size: 14px; font-weight: 600; flex: 1; }
+    .course-row input[type="number"] {
+      width: 70px; padding: 8px; border-radius: 8px;
+      border: 1.5px solid var(--border); font-size: 14px;
+      text-align: center; font-family: inherit;
+    }
+    .btn {
+      padding: 8px 16px; background: var(--yellow);
+      border: none; border-radius: 8px; font-size: 14px;
+      font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .hw-card {
+      background: var(--white); border-radius: 16px;
+      padding: 16px; margin-bottom: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start;
+    }
+    .hw-card img {
+      width: 100px; height: 100px;
+      object-fit: cover; border-radius: 10px;
+      cursor: pointer;
+    }
+    .hw-info { flex: 1; min-width: 200px; }
+    .hw-info p { font-size: 14px; margin-bottom: 4px; }
+    .hw-info .muted { color: var(--muted); font-size: 13px; }
+    .grade-form { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .grade-form input[type="text"] {
+      padding: 8px 12px; border-radius: 8px;
+      border: 1.5px solid var(--border); font-size: 14px;
+      font-family: inherit; flex: 1; min-width: 100px;
+    }
+    .logout { 
+      font-size: 14px; color: var(--muted); text-decoration: none;
+      float: right; padding: 8px 16px; border-radius: 10px;
+      background: var(--white); border: 1.5px solid var(--border);
+    }
+    .message { 
+      padding: 12px; border-radius: 10px; margin-bottom: 16px;
+      background: #e8f5e9; color: #2e7d32; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <a href="/logout" class="logout">Выйти</a>
+  <h1>👩‍💼 Админка</h1>
+
+  <% if (message) { %><div class="message"><%= message %></div><% } %>
+
+  <h2>👥 Ученики</h2>
+  <% users.forEach(user => { %>
+  <div class="card">
+    <div class="student-name"><%= user.name %></div>
+    <div class="student-email"><%= user.email %></div>
+    <% if (user.courses && user.courses[0] && user.courses[0].course_id) { %>
+      <% user.courses.forEach(course => { %>
+      <div class="course-row">
+        <span class="course-name">📚 <%= course.title %></span>
+        <form action="/admin/lessons" method="POST" style="display:flex;gap:8px;align-items:center;">
+          <input type="hidden" name="user_id" value="<%= user.id %>">
+          <input type="hidden" name="course_id" value="<%= course.course_id %>">
+          <input type="number" name="lessons_available" value="<%= course.lessons_available %>" min="1" max="100">
+          <button class="btn" type="submit">💾 Сохранить</button>
+        </form>
+      </div>
+      <% }) %>
+    <% } %>
+  </div>
+  <% }) %>
+
+  <h2>📸 Домашние задания</h2>
+  <% if (homeworks.length === 0) { %>
+    <p style="color:var(--muted)">Пока нет домашних заданий</p>
+  <% } %>
+  <% homeworks.forEach(hw => { %>
+  <div class="hw-card">
+    <a href="/uploads/<%= hw.file_path %>" target="_blank">
+      <img src="/uploads/<%= hw.file_path %>" alt="Домашка">
+    </a>
+    <div class="hw-info">
+      <p><strong><%= hw.name %></strong> (<%= hw.email %>)</p>
+      <p class="muted">Курс: <%= hw.course_id %> · Урок <%= hw.lesson_id %></p>
+      <p class="muted">Сдано: <%= new Date(hw.submitted_at).toLocaleDateString('ru-RU') %></p>
+      <% if (hw.grade) { %>
+        <p style="color:#2e7d32;font-weight:700;margin-top:6px;">Оценка: <%= hw.grade %></p>
+        <% if (hw.comment) { %><p class="muted">Комментарий: <%= hw.comment %></p><% } %>
+      <% } %>
+      <form action="/admin/homework/grade" method="POST" class="grade-form">
+        <input type="hidden" name="homework_id" value="<%= hw.id %>">
+        <input type="text" name="grade" placeholder="Оценка" value="<%= hw.grade || '' %>">
+        <input type="text" name="comment" placeholder="Комментарий" value="<%= hw.comment || '' %>">
+        <button class="btn" type="submit">✅ Сохранить</button>
+      </form>
+    </div>
+  </div>
+  <% }) %>
+
+</body>
+</html>

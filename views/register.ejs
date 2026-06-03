@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Inscription</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --yellow: #FFD966;
+      --yellow-dark: #FCE27E;
+      --gray: #f0f2f5;
+      --border: #e4e6ea;
+      --text: #1c1e21;
+      --muted: #65676b;
+      --white: #ffffff;
+    }
+    html, body {
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 8px 12px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      margin-top: 40px;
+    }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+    input, select {
+      display: block; width: 100%; padding: 14px 16px; margin-bottom: 12px;
+      border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px;
+      background: var(--gray); color: var(--text); outline: none;
+      font-family: inherit; transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus { border-color: var(--yellow); background: var(--white); }
+    button {
+      display: block; width: 100%; padding: 15px;
+      background: var(--yellow); color: #241c15; border: none;
+      border-radius: 12px; font-size: 16px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-bottom: 10px;
+      transition: background 0.2s;
+    }
+    button:hover { background: var(--yellow-dark); }
+    .link { text-align: center; font-size: 14px; color: var(--muted); }
+    .link a { color: var(--text); font-weight: 600; text-decoration: none; }
+    .error { color: #e53935; font-size: 13px; margin-bottom: 12px; font-weight: 600; }
+    .success { color: #2e7d32; font-size: 13px; margin-bottom: 12px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Inscription 📝</h1>
+    <p class="subtitle">Créez votre compte pour accéder au cours</p>
+    <% if (error) { %><p class="error"><%= error %></p><% } %>
+    <% if (success) { %><p class="success"><%= success %></p><% } %>
+    <form action="/register" method="POST">
+      <input type="text" name="name" placeholder="Votre prénom" required>
+      <input type="email" name="email" placeholder="Email" required autocorrect="off" autocapitalize="none">
+      <input type="password" name="password" placeholder="Mot de passe" required>
+      <select name="course_id" required>
+        <option value="" disabled selected>Choisissez un cours</option>
+        <% courses.forEach(course => { %>
+          <option value="<%= course.id %>"><%= course.title %></option>
+        <% }) %>
+      </select>
+      <button type="submit">S'inscrire</button>
+    </form>
+    <p class="link">Déjà un compte ? <a href="/login">Se connecter</a></p>
+  </div>
+</body>
+</html>
