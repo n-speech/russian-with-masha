@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Leçon 1 — Les salutations</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --yellow: #FFD966;
+      --yellow-dark: #FCE27E;
+      --gray: #f0f2f5;
+      --border: #e4e6ea;
+      --text: #1c1e21;
+      --muted: #65676b;
+      --white: #ffffff;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      padding: 16px 16px 40px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .lesson-header {
+      background: var(--yellow);
+      border-radius: 20px;
+      padding: 24px 20px;
+      margin-bottom: 20px;
+    }
+    .lesson-number {
+      font-size: 13px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      opacity: 0.7; margin-bottom: 6px;
+    }
+    .lesson-title {
+      font-size: 22px; font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .lesson-subtitle {
+      font-size: 15px; opacity: 0.8;
+    }
+    .section {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .section-title {
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .plan-list {
+      list-style: none;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .plan-item {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 15px;
+    }
+    .plan-num {
+      width: 28px; height: 28px;
+      background: var(--yellow);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .phrase-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .phrase-item {
+      display: flex; justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: var(--gray);
+      border-radius: 12px;
+    }
+    .phrase-ru {
+      font-size: 17px; font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .phrase-fr {
+      font-size: 14px; color: var(--muted);
+    }
+    .video-wrap {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--gray);
+    }
+    .video-wrap iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+    .video-placeholder {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: var(--muted); gap: 8px;
+    }
+    .video-placeholder span { font-size: 40px; }
+    .video-placeholder p { font-size: 14px; }
+    .exercise-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .exercise-btn {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      background: var(--gray);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .exercise-btn:active { background: var(--yellow-dark); }
+    .exercise-icon {
+      width: 40px; height: 40px;
+      background: var(--yellow);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .exercise-info { flex: 1; }
+    .exercise-name { font-size: 15px; font-weight: 600; }
+    .exercise-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .pdf-btn {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      background: var(--gray);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .pdf-icon {
+      width: 40px; height: 40px;
+      background: #ffebeb;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Заголовок -->
+  <div class="lesson-header">
+    <div class="lesson-number">Leçon 1</div>
+    <div class="lesson-title">Les salutations 👋</div>
+    <div class="lesson-subtitle">Приветствие и прощание на русском</div>
+  </div>
+
+  <!-- План урока -->
+  <div class="section">
+    <div class="section-title">📋 Plan du cours</div>
+    <ul class="plan-list">
+      <li class="plan-item"><div class="plan-num">1</div>Vidéo — les salutations en contexte</li>
+      <li class="plan-item"><div class="plan-num">2</div>Les phrases essentielles</li>
+      <li class="plan-item"><div class="plan-num">3</div>Exercices interactifs</li>
+      <li class="plan-item"><div class="plan-num">4</div>Exercices écrits (PDF)</li>
+    </ul>
+  </div>
+
+  <!-- Фразы -->
+  <div class="section">
+    <div class="section-title">💬 Phrases essentielles</div>
+    <div class="phrase-list">
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">Здравствуйте</div>
+          <div class="phrase-fr">Bonjour (formel)</div>
+        </div>
+      </div>
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">Здравствуй</div>
+          <div class="phrase-fr">Bonjour (informel)</div>
+        </div>
+      </div>
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">Привет</div>
+          <div class="phrase-fr">Salut</div>
+        </div>
+      </div>
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">До свидания</div>
+          <div class="phrase-fr">Au revoir</div>
+        </div>
+      </div>
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">Пока</div>
+          <div class="phrase-fr">Salut / À bientôt</div>
+        </div>
+      </div>
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">Доброе утро</div>
+          <div class="phrase-fr">Bonjour (le matin)</div>
+        </div>
+      </div>
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">Добрый день</div>
+          <div class="phrase-fr">Bonjour (l'après-midi)</div>
+        </div>
+      </div>
+      <div class="phrase-item">
+        <div>
+          <div class="phrase-ru">Добрый вечер</div>
+          <div class="phrase-fr">Bonsoir</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Видео -->
+  <div class="section">
+    <div class="section-title">🎬 Partie 1 — Vidéo</div>
+    <div class="video-wrap">
+      <div class="video-placeholder">
+        <span>🎬</span>
+        <p>Vidéo bientôt disponible</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Упражнения -->
+  <div class="section">
+    <div class="section-title">✏️ Partie 2 — Exercices interactifs</div>
+    <div class="exercise-list">
+      <a href="#" class="exercise-btn">
+        <div class="exercise-icon">🎧</div>
+        <div class="exercise-info">
+          <div class="exercise-name">Exercice 1</div>
+          <div class="exercise-desc">Bientôt disponible</div>
+        </div>
+        →
+      </a>
+    </div>
+  </div>
+
+  <!-- PDF -->
+  <div class="section">
+    <div class="section-title">📄 Partie 3 — Exercices écrits</div>
+    <a href="#" class="pdf-btn">
+      <div class="pdf-icon">📄</div>
+      <div class="exercise-info">
+        <div class="exercise-name">Fiche d'exercices</div>
+        <div class="exercise-desc">Bientôt disponible</div>
+      </div>
+    </a>
+  </div>
+
+</body>
+</html>
