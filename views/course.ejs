@@ -156,7 +156,7 @@
   <!-- Вкладка: Уроки -->
   <div id="tab-lessons" class="tab-content active">
     <div class="lessons-grid">
-      <% for (let i = 1; i <= 30; i++) { %>
+      <% for (let i = 1; i <= course.total_lessons; i++) { %>
         <% if (i <= course.lessons_available) { %>
           <a href="/lesson/<%= course.id %>/<%= i %>" class="lesson-btn open">
             <span>📖</span>Leçon <%= i %>
