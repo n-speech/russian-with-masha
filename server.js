@@ -141,15 +141,15 @@ app.post('/login', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
-    if (!user) return res.render('login', { error: 'Utilisateur non trouvé' });
+    if (!user) return res.render('login', { error: 'Utilisateur non trouvé', query: {} });
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.render('login', { error: 'Mot de passe incorrect' });
-    if (!user.is_verified) return res.render('login', { error: 'Veuillez confirmer votre email avant de vous connecter' });
+    if (!match) return res.render('login', { error: 'Mot de passe incorrect', query: {} });
+    if (!user.is_verified) return res.render('login', { error: 'Veuillez confirmer votre email avant de vous connecter', query: {} });
     req.session.user = { id: user.id, email: user.email, name: user.name, is_admin: user.is_admin };
     return res.redirect(user.is_admin ? '/admin' : '/cabinet');
   } catch (err) {
     console.error(err);
-    res.render('login', { error: 'Произошла ошибка' });
+    res.render('login', { error: 'Произошла ошибка', query: {} });
   }
 });
 
