@@ -140,6 +140,12 @@
       cursor: pointer; padding: 0;
       font-family: inherit;
     }
+    .file-label {
+  display: block; padding: 12px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--gray);
+  font-size: 14px; cursor: pointer; text-align: center;
+  font-family: inherit;
+}
   </style>
 </head>
 <body>
@@ -184,7 +190,11 @@
             <option value="<%= i %>">Leçon <%= i %></option>
           <% } %>
         </select>
-        <input type="file" name="photo" accept="image/*" capture="environment" required>
+        <label class="file-label">
+  📎 Choisir un fichier
+  <input type="file" name="photo" accept="image/*" capture="environment" required style="display:none;" onchange="updateFileName(this)">
+</label>
+<p id="file-name" style="font-size:13px;color:var(--muted);margin-top:-4px;">Aucun fichier choisi</p>
         <button type="submit" id="submit-btn">Envoyer 📤</button>
         <p id="limit-msg" style="color:#e53935;font-size:13px;display:none;">⚠️ Maximum 2 devoirs par leçon</p>
       </form>
@@ -258,6 +268,10 @@
     }
     // Показать вкладку домашек если пришли после отправки
     if (window.location.hash === '#devoirs') switchTab('homework');
+    function updateFileName(input) {
+  const name = input.files[0] ? input.files[0].name : 'Aucun fichier choisi';
+  document.getElementById('file-name').textContent = name;
+}
   </script>
 </body>
 </html>
