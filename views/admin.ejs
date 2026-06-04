@@ -107,9 +107,9 @@
   <% } %>
   <% homeworks.forEach(hw => { %>
   <div class="hw-card">
-    <a href="/uploads/<%= hw.file_path %>" target="_blank">
-      <img src="/uploads/<%= hw.file_path %>" alt="Домашка">
-    </a>
+    <a href="<%= hw.file_path %>" target="_blank">
+  <img src="<%= hw.file_path %>" alt="Домашка">
+</a>
     <div class="hw-info">
       <p><strong><%= hw.name %></strong> (<%= hw.email %>)</p>
       <p class="muted">Курс: <%= hw.course_id %> · Урок <%= hw.lesson_id %></p>

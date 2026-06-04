@@ -6,6 +6,14 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const { Pool } = require('pg');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 const nodemailer = require('nodemailer');
 
 const app = express();
@@ -35,16 +43,12 @@ app.use(session({
 }));
 
 // Загрузка файлов (домашки)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'russian-with-masha/homeworks',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'heic', 'webp', 'mp3', 'mp4', 'm4a', 'ogg', 'webm', 'aac'],
   },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `hw_${Date.now()}${ext}`);
-  }
 });
 const upload = multer({ storage });
 
@@ -63,7 +67,7 @@ function requireAdmin(req, res, next) {
 
 // ─── ГЛАВНАЯ ───────────────────────────────────────────
 app.get('/', (req, res) => {
-  if (req.session.user) return res.redirect(`/cabinet/course/${course_id}#devoirs`);
+  if (req.session.user) return res.redirect('/cabinet');
   res.redirect('/login');
 });
 
@@ -135,7 +139,7 @@ app.get('/cabinet', requireLogin, async (req, res) => {
       JOIN courses c ON c.id = uc.course_id
       LEFT JOIN homeworks h ON h.course_id = c.id AND h.user_id = $1
       WHERE uc.user_id = $1
-      GROUP BY c.id, c.title, c.description, uc.lessons_available
+      GROUP BY c.id, c.title, c.description, c.total_lessons, uc.lessons_available
     `, [user.id]);
 
     res.render('cabinet', { user, courses: coursesResult.rows });
@@ -157,7 +161,7 @@ app.get('/cabinet/course/:course_id', requireLogin, async (req, res) => {
       JOIN courses c ON c.id = uc.course_id
       LEFT JOIN homeworks h ON h.course_id = c.id AND h.user_id = $1
       WHERE uc.user_id = $1 AND c.id = $2
-      GROUP BY c.id, c.title, uc.lessons_available
+      GROUP BY c.id, c.title, c.description, c.total_lessons, uc.lessons_available
     `, [user.id, course_id]);
 
     if (!courseResult.rows[0]) return res.redirect('/cabinet');
@@ -202,18 +206,26 @@ app.get('/lesson/:course/:id', requireLogin, async (req, res) => {
 });
 
 // ─── ДОМАШКИ ───────────────────────────────────────────
-app.post('/homework/upload', requireLogin, upload.single('photo'), async (req, res) => {
+app.post('/homework/upload', requireLogin, (req, res, next) => {
+  upload.single('photo')(req, res, (err) => {
+    if (err) {
+      console.error('Multer/Cloudinary ошибка:', err.message, err);
+      return res.status(500).send('❌ Ошибка загрузки файла: ' + err.message);
+    }
+    next();
+  });
+}, async (req, res) => {
   const { course_id, lesson_id } = req.body;
   const user = req.session.user;
   try {
     await pool.query(
       'INSERT INTO homeworks (user_id, course_id, lesson_id, file_path) VALUES ($1, $2, $3, $4)',
-      [user.id, course_id, lesson_id, req.file.filename]
+      [user.id, course_id, lesson_id, req.file.path]
     );
-    res.redirect('/cabinet');
+    res.redirect(`/cabinet/course/${course_id}#devoirs`);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('❌ Ошибка загрузки');
+    console.error('Детали ошибки:', err.message, err.stack);
+    res.status(500).send('❌ Ошибка: ' + err.message);
   }
 });
 
@@ -270,14 +282,6 @@ app.post('/admin/homework/grade', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/uploads/:filename', requireLogin, (req, res) => {
-  const filePath = path.join(__dirname, 'uploads', req.params.filename);
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
-    res.status(404).send('Файл не найден');
-  }
-});
 
 // ─── ЗАПУСК ────────────────────────────────────────────
 app.listen(port, () => {

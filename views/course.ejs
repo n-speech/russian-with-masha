@@ -28,9 +28,12 @@
       align-items: center;
       gap: 12px;
       margin-bottom: 24px;
+      min-height: 36px;
     }
-    .back {
+.back {
       font-size: 22px; text-decoration: none; color: var(--text);
+      line-height: 1;
+      display: flex; align-items: center;
     }
     .header h1 { font-size: 20px; font-weight: 700; }
 
@@ -178,8 +181,8 @@
 
     <% homeworks.forEach(hw => { %>
     <div class="hw-item">
-      <a href="/uploads/<%= hw.file_path %>" target="_blank">
-        <img src="/uploads/<%= hw.file_path %>" alt="devoir">
+      <a href="<%= hw.file_path %>" target="_blank">
+        <img src="<%= hw.file_path %>" alt="devoir">
       </a>
       <div class="hw-info">
         <p class="muted">Leçon <%= hw.lesson_id %> · <%= new Date(hw.submitted_at).toLocaleDateString('fr-FR') %></p>
