@@ -15,6 +15,17 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -83,28 +94,46 @@ app.post('/register', async (req, res) => {
   try {
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows[0]) {
-      return res.render('register', { courses: coursesResult.rows, error: 'Этот email уже зарегистрирован', success: null });
+      return res.render('register', { courses: coursesResult.rows, error: 'Cet email est déjà utilisé', success: null });
     }
     const hashed = await bcrypt.hash(password, 10);
+    const token = crypto.randomBytes(32).toString('hex');
     const userResult = await pool.query(
-      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id',
-      [name, email, hashed]
+      'INSERT INTO users (name, email, password, verification_token, is_verified) VALUES ($1, $2, $3, $4, FALSE) RETURNING id',
+      [name, email, hashed, token]
     );
     const userId = userResult.rows[0].id;
     await pool.query(
       'INSERT INTO user_courses (user_id, course_id, lessons_available) VALUES ($1, $2, 1)',
       [userId, course_id]
     );
-    res.render('register', { courses: coursesResult.rows, error: null, success: 'Регистрация прошла успешно! Теперь войдите.' });
+
+    const verifyUrl = `${process.env.APP_URL}/verify/${token}`;
+    await transporter.sendMail({
+      from: `"Russian with Masha" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: 'Confirmez votre inscription — Russian with Masha',
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+          <h2 style="color:#1c1e21;">Bonjour ${name} 👋</h2>
+          <p style="color:#65676b;margin:16px 0;">Merci de vous être inscrit(e) à Russian with Masha!</p>
+          <p style="color:#65676b;margin:16px 0;">Cliquez sur le bouton ci-dessous pour confirmer votre adresse email:</p>
+          <a href="${verifyUrl}" style="display:inline-block;background:#FFD966;color:#241c15;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;margin:16px 0;">Confirmer mon email</a>
+          <p style="color:#65676b;font-size:13px;margin-top:24px;">Ce lien expire dans 24 heures.</p>
+        </div>
+      `
+    });
+
+    res.render('register', { courses: coursesResult.rows, error: null, success: 'Inscription réussie! Vérifiez votre email pour confirmer votre compte.' });
   } catch (err) {
     console.error(err);
-    res.render('register', { courses: coursesResult.rows, error: 'Произошла ошибка', success: null });
+    res.render('register', { courses: coursesResult.rows, error: 'Une erreur est survenue', success: null });
   }
 });
 
 // ─── ЛОГИН ─────────────────────────────────────────────
 app.get('/login', (req, res) => {
-  res.render('login', { error: null });
+  res.render('login', { error: null, query: req.query });
 });
 
 app.post('/login', async (req, res) => {
@@ -112,14 +141,33 @@ app.post('/login', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
-    if (!user) return res.render('login', { error: 'Пользователь не найден' });
+    if (!user) return res.render('login', { error: 'Utilisateur non trouvé' });
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.render('login', { error: 'Неверный пароль' });
+    if (!match) return res.render('login', { error: 'Mot de passe incorrect' });
+    if (!user.is_verified) return res.render('login', { error: 'Veuillez confirmer votre email avant de vous connecter' });
     req.session.user = { id: user.id, email: user.email, name: user.name, is_admin: user.is_admin };
     return res.redirect(user.is_admin ? '/admin' : '/cabinet');
   } catch (err) {
     console.error(err);
     res.render('login', { error: 'Произошла ошибка' });
+  }
+});
+
+// ─── ПОДТВЕРЖДЕНИЕ EMAIL ───────────────────────────────
+app.get('/verify/:token', async (req, res) => {
+  const { token } = req.params;
+  try {
+    const result = await pool.query(
+      'UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE verification_token = $1 RETURNING id',
+      [token]
+    );
+    if (!result.rows[0]) {
+      return res.send('❌ Lien invalide ou expiré');
+    }
+    res.redirect('/login?verified=1');
+  } catch (err) {
+    console.error(err);
+    res.send('❌ Une erreur est survenue');
   }
 });
 
@@ -328,6 +376,82 @@ app.post('/admin/homework/delete', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.redirect('/admin');
+  }
+});
+
+// ─── СБРОС ПАРОЛЯ ──────────────────────────────────────
+app.get('/forgot', (req, res) => {
+  res.render('forgot', { error: null, success: null });
+});
+
+app.post('/forgot', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = result.rows[0];
+    if (!user) {
+      return res.render('forgot', { error: null, success: 'Si cet email existe, vous recevrez un lien de réinitialisation.' });
+    }
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000); // 1 час
+    await pool.query(
+      'UPDATE users SET reset_token = $1, reset_expires = $2 WHERE email = $3',
+      [token, expires, email]
+    );
+    const resetUrl = `${process.env.APP_URL}/reset/${token}`;
+    await transporter.sendMail({
+      from: `"Russian with Masha" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: 'Réinitialisation de mot de passe — Russian with Masha',
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+          <h2 style="color:#1c1e21;">Réinitialisation de mot de passe</h2>
+          <p style="color:#65676b;margin:16px 0;">Cliquez sur le bouton ci-dessous pour réinitialiser votre mot de passe:</p>
+          <a href="${resetUrl}" style="display:inline-block;background:#FFD966;color:#241c15;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;margin:16px 0;">Réinitialiser mon mot de passe</a>
+          <p style="color:#65676b;font-size:13px;margin-top:24px;">Ce lien expire dans 1 heure.</p>
+        </div>
+      `
+    });
+    res.render('forgot', { error: null, success: 'Si cet email existe, vous recevrez un lien de réinitialisation.' });
+  } catch (err) {
+    console.error(err);
+    res.render('forgot', { error: 'Une erreur est survenue', success: null });
+  }
+});
+
+app.get('/reset/:token', async (req, res) => {
+  const { token } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM users WHERE reset_token = $1 AND reset_expires > NOW()',
+      [token]
+    );
+    if (!result.rows[0]) return res.send('❌ Lien invalide ou expiré');
+    res.render('reset', { token, error: null });
+  } catch (err) {
+    console.error(err);
+    res.send('❌ Une erreur est survenue');
+  }
+});
+
+app.post('/reset/:token', async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM users WHERE reset_token = $1 AND reset_expires > NOW()',
+      [token]
+    );
+    if (!result.rows[0]) return res.send('❌ Lien invalide ou expiré');
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query(
+      'UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL WHERE reset_token = $2',
+      [hashed, token]
+    );
+    res.redirect('/login?reset=1');
+  } catch (err) {
+    console.error(err);
+    res.send('❌ Une erreur est survenue');
   }
 });
 
