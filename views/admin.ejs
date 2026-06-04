@@ -124,6 +124,12 @@
         <input type="text" name="comment" placeholder="Комментарий" value="<%= hw.comment || '' %>">
         <button class="btn" type="submit">✅ Сохранить</button>
       </form>
+      <button class="btn" type="submit">✅ Сохранить</button>
+      </form>
+      <form action="/admin/homework/delete" method="POST" style="margin-top:8px;">
+        <input type="hidden" name="homework_id" value="<%= hw.id %>">
+        <button type="submit" style="background:none;border:none;color:#e53935;font-size:13px;cursor:pointer;font-family:inherit;" onclick="return confirm('Удалить домашку?')">🗑 Удалить</button>
+      </form>
     </div>
   </div>
   <% }) %>

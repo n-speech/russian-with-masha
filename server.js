@@ -218,6 +218,14 @@ app.post('/homework/upload', requireLogin, (req, res, next) => {
   const { course_id, lesson_id } = req.body;
   const user = req.session.user;
   try {
+    // Проверяем лимит — максимум 2 домашки на урок
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM homeworks WHERE user_id = $1 AND course_id = $2 AND lesson_id = $3',
+      [user.id, course_id, lesson_id]
+    );
+    if (parseInt(countResult.rows[0].count) >= 2) {
+      return res.redirect(`/cabinet/course/${course_id}#devoirs`);
+    }
     await pool.query(
       'INSERT INTO homeworks (user_id, course_id, lesson_id, file_path) VALUES ($1, $2, $3, $4)',
       [user.id, course_id, lesson_id, req.file.path]
@@ -226,6 +234,31 @@ app.post('/homework/upload', requireLogin, (req, res, next) => {
   } catch (err) {
     console.error('Детали ошибки:', err.message, err.stack);
     res.status(500).send('❌ Ошибка: ' + err.message);
+  }
+});
+// ─── УДАЛЕНИЕ ДОМАШКИ ──────────────────────────────────
+app.post('/homework/delete', requireLogin, async (req, res) => {
+  const { homework_id, course_id } = req.body;
+  const user = req.session.user;
+  try {
+    // Можно удалить только если нет оценки
+    const hw = await pool.query(
+      'SELECT * FROM homeworks WHERE id = $1 AND user_id = $2',
+      [homework_id, user.id]
+    );
+    if (!hw.rows[0]) return res.redirect(`/cabinet/course/${course_id}#devoirs`);
+    if (hw.rows[0].grade) return res.redirect(`/cabinet/course/${course_id}#devoirs`);
+    
+    // Удаляем из Cloudinary
+    const publicId = hw.rows[0].file_path.split('/').slice(-2).join('/').split('.')[0];
+    await cloudinary.uploader.destroy(publicId);
+    
+    // Удаляем из базы
+    await pool.query('DELETE FROM homeworks WHERE id = $1', [homework_id]);
+    res.redirect(`/cabinet/course/${course_id}#devoirs`);
+  } catch (err) {
+    console.error(err);
+    res.redirect(`/cabinet/course/${course_id}#devoirs`);
   }
 });
 
@@ -282,6 +315,21 @@ app.post('/admin/homework/grade', requireAdmin, async (req, res) => {
   }
 });
 
+app.post('/admin/homework/delete', requireAdmin, async (req, res) => {
+  const { homework_id } = req.body;
+  try {
+    const hw = await pool.query('SELECT * FROM homeworks WHERE id = $1', [homework_id]);
+    if (hw.rows[0]) {
+      const publicId = hw.rows[0].file_path.split('/').slice(-2).join('/').split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
+      await pool.query('DELETE FROM homeworks WHERE id = $1', [homework_id]);
+    }
+    res.redirect('/admin');
+  } catch (err) {
+    console.error(err);
+    res.redirect('/admin');
+  }
+});
 
 // ─── ЗАПУСК ────────────────────────────────────────────
 app.listen(port, () => {

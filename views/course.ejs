@@ -134,6 +134,12 @@
     .hw-info .muted { color: var(--muted); font-size: 13px; }
     .hw-grade { font-weight: 700; color: #2e7d32; font-size: 15px; }
     .hw-pending { color: var(--muted); font-size: 13px; font-style: italic; }
+    .btn-delete {
+      background: none; border: none;
+      color: #e53935; font-size: 13px;
+      cursor: pointer; padding: 0;
+      font-family: inherit;
+    }
   </style>
 </head>
 <body>
@@ -160,24 +166,53 @@
   </div>
 
   <!-- Вкладка: Домашки -->
+   
   <div id="tab-homework" class="tab-content">
+    <%
+      // Считаем домашки по урокам
+      const hwCountMap = {};
+      homeworks.forEach(hw => {
+        hwCountMap[hw.lesson_id] = (hwCountMap[hw.lesson_id] || 0) + 1;
+      });
+    %>
     <div class="hw-upload-card">
       <h3>📸 Soumettre un devoir</h3>
-      <form action="/homework/upload" method="POST" enctype="multipart/form-data" class="hw-form">
+      <form action="/homework/upload" method="POST" enctype="multipart/form-data" class="hw-form" id="hw-form">
         <input type="hidden" name="course_id" value="<%= course.id %>">
-        <select name="lesson_id" required>
+        <select name="lesson_id" id="lesson-select" required onchange="checkLimit(this.value)">
           <% for (let i = 1; i <= course.lessons_available; i++) { %>
             <option value="<%= i %>">Leçon <%= i %></option>
           <% } %>
         </select>
         <input type="file" name="photo" accept="image/*" capture="environment" required>
-        <button type="submit">Envoyer 📤</button>
+        <button type="submit" id="submit-btn">Envoyer 📤</button>
+        <p id="limit-msg" style="color:#e53935;font-size:13px;display:none;">⚠️ Maximum 2 devoirs par leçon</p>
       </form>
+
+      <script>
+        const hwCounts = <%- JSON.stringify(hwCountMap) %>;
+        function checkLimit(lessonId) {
+          const count = hwCounts[lessonId] || 0;
+          const btn = document.getElementById('submit-btn');
+          const msg = document.getElementById('limit-msg');
+          if (count >= 2) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            msg.style.display = 'block';
+          } else {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            msg.style.display = 'none';
+          }
+        }
+        checkLimit(document.getElementById('lesson-select').value);
+      </script>
     </div>
 
     <% if (homeworks.length === 0) { %>
       <p style="color:var(--muted);text-align:center;margin-top:20px;">Aucun devoir soumis</p>
     <% } %>
+
 
     <% homeworks.forEach(hw => { %>
     <div class="hw-item">
@@ -191,6 +226,11 @@
           <% if (hw.comment) { %><p class="muted">💬 <%= hw.comment %></p><% } %>
         <% } else { %>
           <p class="hw-pending">⏳ En attente de correction</p>
+          <form action="/homework/delete" method="POST" style="margin-top:8px;">
+            <input type="hidden" name="homework_id" value="<%= hw.id %>">
+            <input type="hidden" name="course_id" value="<%= course.id %>">
+            <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ce devoir ?')">🗑 Supprimer</button>
+          </form>
         <% } %>
       </div>
     </div>
