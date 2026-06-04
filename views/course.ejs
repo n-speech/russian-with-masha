@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title><%= course.title %></title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --yellow: #FFD966;
+      --yellow-dark: #FCE27E;
+      --gray: #f0f2f5;
+      --border: #e4e6ea;
+      --text: #1c1e21;
+      --muted: #65676b;
+      --white: #ffffff;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      padding: 16px 16px 80px 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .back {
+      font-size: 22px; text-decoration: none; color: var(--text);
+    }
+    .header h1 { font-size: 20px; font-weight: 700; }
+
+    /* Таббар */
+    .tabbar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--white);
+      border-top: 1.5px solid var(--border);
+      display: flex;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .tab-btn {
+      flex: 1; padding: 14px 0;
+      background: none; border: none;
+      font-size: 13px; font-weight: 600;
+      color: var(--muted); cursor: pointer;
+      font-family: inherit;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      transition: color 0.2s;
+    }
+    .tab-btn.active { color: var(--text); }
+    .tab-btn span { font-size: 20px; }
+    .tab-indicator {
+      position: absolute;
+      bottom: 0; height: 3px;
+      background: var(--yellow);
+      border-radius: 3px 3px 0 0;
+      transition: left 0.2s;
+      width: 50%;
+    }
+
+    /* Контент вкладок */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Сетка уроков */
+    .lessons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+    }
+    .lesson-btn {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 12px 8px; border-radius: 12px;
+      font-size: 13px; font-weight: 600;
+      text-decoration: none; border: none;
+      cursor: pointer; transition: transform 0.1s;
+    }
+    .lesson-btn.open {
+      background: var(--yellow); color: #241c15;
+    }
+    .lesson-btn.open:hover { background: var(--yellow-dark); transform: scale(1.03); }
+    .lesson-btn.locked {
+      background: var(--white); color: var(--muted);
+      cursor: not-allowed; border: 1.5px solid var(--border);
+    }
+    .lesson-btn span { font-size: 20px; margin-bottom: 4px; }
+
+    /* Домашки */
+    .hw-upload-card {
+      background: var(--white); border-radius: 16px;
+      padding: 20px; margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .hw-upload-card h3 {
+      font-size: 15px; font-weight: 600; margin-bottom: 14px;
+    }
+    .hw-form { display: flex; flex-direction: column; gap: 10px; }
+    .hw-form select, .hw-form input[type="file"] {
+      padding: 12px; border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--gray); font-size: 14px;
+      font-family: inherit; outline: none;
+    }
+    .hw-form button {
+      padding: 13px; background: var(--yellow);
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .hw-item {
+      background: var(--white); border-radius: 14px;
+      padding: 14px; margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .hw-item img {
+      width: 70px; height: 70px;
+      object-fit: cover; border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .hw-info { flex: 1; }
+    .hw-info p { font-size: 14px; margin-bottom: 3px; }
+    .hw-info .muted { color: var(--muted); font-size: 13px; }
+    .hw-grade { font-weight: 700; color: #2e7d32; font-size: 15px; }
+    .hw-pending { color: var(--muted); font-size: 13px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="/cabinet" class="back">←</a>
+    <h1><%= course.title %></h1>
+  </div>
+
+  <!-- Вкладка: Уроки -->
+  <div id="tab-lessons" class="tab-content active">
+    <div class="lessons-grid">
+      <% for (let i = 1; i <= 30; i++) { %>
+        <% if (i <= course.lessons_available) { %>
+          <a href="/lesson/<%= course.id %>/<%= i %>" class="lesson-btn open">
+            <span>📖</span>Leçon <%= i %>
+          </a>
+        <% } else { %>
+          <div class="lesson-btn locked">
+            <span>🔒</span>Leçon <%= i %>
+          </div>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Вкладка: Домашки -->
+  <div id="tab-homework" class="tab-content">
+    <div class="hw-upload-card">
+      <h3>📸 Soumettre un devoir</h3>
+      <form action="/homework/upload" method="POST" enctype="multipart/form-data" class="hw-form">
+        <input type="hidden" name="course_id" value="<%= course.id %>">
+        <select name="lesson_id" required>
+          <% for (let i = 1; i <= course.lessons_available; i++) { %>
+            <option value="<%= i %>">Leçon <%= i %></option>
+          <% } %>
+        </select>
+        <input type="file" name="photo" accept="image/*" capture="environment" required>
+        <button type="submit">Envoyer 📤</button>
+      </form>
+    </div>
+
+    <% if (homeworks.length === 0) { %>
+      <p style="color:var(--muted);text-align:center;margin-top:20px;">Aucun devoir soumis</p>
+    <% } %>
+
+    <% homeworks.forEach(hw => { %>
+    <div class="hw-item">
+      <a href="/uploads/<%= hw.file_path %>" target="_blank">
+        <img src="/uploads/<%= hw.file_path %>" alt="devoir">
+      </a>
+      <div class="hw-info">
+        <p class="muted">Leçon <%= hw.lesson_id %> · <%= new Date(hw.submitted_at).toLocaleDateString('fr-FR') %></p>
+        <% if (hw.grade) { %>
+          <p class="hw-grade">Note : <%= hw.grade %></p>
+          <% if (hw.comment) { %><p class="muted">💬 <%= hw.comment %></p><% } %>
+        <% } else { %>
+          <p class="hw-pending">⏳ En attente de correction</p>
+        <% } %>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Таббар -->
+  <div class="tabbar">
+    <div class="tab-indicator" id="indicator"></div>
+    <button class="tab-btn active" id="btn-lessons" onclick="switchTab('lessons')">
+      <span>📖</span>Leçons
+    </button>
+    <button class="tab-btn" id="btn-homework" onclick="switchTab('homework')">
+      <span>📸</span>Devoirs
+    </button>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('btn-' + tab).classList.add('active');
+      document.getElementById('indicator').style.left = tab === 'lessons' ? '0' : '50%';
+    }
+    // Показать вкладку домашек если пришли после отправки
+    if (window.location.hash === '#devoirs') switchTab('homework');
+  </script>
+</body>
+</html>

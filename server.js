@@ -63,7 +63,7 @@ function requireAdmin(req, res, next) {
 
 // ─── ГЛАВНАЯ ───────────────────────────────────────────
 app.get('/', (req, res) => {
-  if (req.session.user) return res.redirect('/cabinet');
+  if (req.session.user) return res.redirect(`/cabinet/course/${course_id}#devoirs`);
   res.redirect('/login');
 });
 
@@ -129,22 +129,49 @@ app.get('/cabinet', requireLogin, async (req, res) => {
   const user = req.session.user;
   try {
     const coursesResult = await pool.query(`
-      SELECT c.id, c.title, uc.lessons_available
+      SELECT c.id, c.title, c.description, c.total_lessons, uc.lessons_available,
+        COUNT(DISTINCT h.lesson_id) FILTER (WHERE h.grade IS NOT NULL) as completed
       FROM user_courses uc
       JOIN courses c ON c.id = uc.course_id
+      LEFT JOIN homeworks h ON h.course_id = c.id AND h.user_id = $1
       WHERE uc.user_id = $1
+      GROUP BY c.id, c.title, c.description, uc.lessons_available
     `, [user.id]);
 
-    const userCourses = coursesResult.rows;
-
-    const homeworksResult = await pool.query(
-      'SELECT * FROM homeworks WHERE user_id = $1 ORDER BY submitted_at DESC',
-      [user.id]
-    );
-    res.render('cabinet', { user, courses: userCourses, homeworks: homeworksResult.rows });
+    res.render('cabinet', { user, courses: coursesResult.rows });
   } catch (err) {
     console.error(err);
     res.send('❌ Ошибка загрузки кабинета');
+  }
+});
+
+// ─── СТРАНИЦА КУРСА ────────────────────────────────────
+app.get('/cabinet/course/:course_id', requireLogin, async (req, res) => {
+  const user = req.session.user;
+  const { course_id } = req.params;
+  try {
+    const courseResult = await pool.query(`
+      SELECT c.id, c.title, c.description, c.total_lessons, uc.lessons_available,
+        COUNT(DISTINCT h.lesson_id) FILTER (WHERE h.grade IS NOT NULL) as completed
+      FROM user_courses uc
+      JOIN courses c ON c.id = uc.course_id
+      LEFT JOIN homeworks h ON h.course_id = c.id AND h.user_id = $1
+      WHERE uc.user_id = $1 AND c.id = $2
+      GROUP BY c.id, c.title, uc.lessons_available
+    `, [user.id, course_id]);
+
+    if (!courseResult.rows[0]) return res.redirect('/cabinet');
+    const course = courseResult.rows[0];
+
+    const homeworksResult = await pool.query(
+      'SELECT * FROM homeworks WHERE user_id = $1 AND course_id = $2 ORDER BY submitted_at DESC',
+      [user.id, course_id]
+    );
+
+    res.render('course', { user, course, homeworks: homeworksResult.rows });
+  } catch (err) {
+    console.error(err);
+    res.send('❌ Ошибка загрузки курса');
   }
 });
 

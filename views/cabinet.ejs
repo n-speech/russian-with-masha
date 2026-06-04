@@ -14,19 +14,20 @@
       --text: #1c1e21;
       --muted: #65676b;
       --white: #ffffff;
-      --locked: #ccc;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--gray);
       color: var(--text);
-      padding: 16px;
+      padding: 20px 16px;
+      max-width: 480px;
+      margin: 0 auto;
     }
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .header h1 { font-size: 22px; font-weight: 700; }
     .logout {
@@ -34,81 +35,58 @@
       padding: 8px 16px; border-radius: 10px; background: var(--white);
       border: 1.5px solid var(--border);
     }
-    .course-block {
+    .section-title {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 14px;
+    }
+    .course-card {
       background: var(--white);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
-    .course-title {
-      font-size: 18px; font-weight: 700; margin-bottom: 16px;
-      padding-bottom: 12px; border-bottom: 2px solid var(--gray);
-    }
-    .lessons-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .lesson-btn {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 12px 8px;
-      border-radius: 12px;
-      font-size: 13px; font-weight: 600;
       text-decoration: none;
-      border: none; cursor: pointer;
-      transition: transform 0.1s;
+      color: var(--text);
+      display: block;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
-    .lesson-btn.open {
+    .course-card:active { transform: scale(0.98); }
+    .course-title {
+      font-size: 17px; font-weight: 700; margin-bottom: 12px;
+    }
+    .progress-bar-wrap {
+      background: #d0d3d8;
+      border-radius: 99px;
+      height: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--yellow);
+      border-radius: 99px;
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 13px; color: var(--muted);
+      display: flex; justify-content: space-between;
+    }
+    .card-footer {
+      margin-top: 14px;
+      display: flex; justify-content: flex-end;
+    }
+    .btn-go {
       background: var(--yellow);
       color: #241c15;
-    }
-    .lesson-btn.open:hover { background: var(--yellow-dark); transform: scale(1.03); }
-    .lesson-btn.locked {
-      background: var(--gray);
-      color: var(--locked);
-      cursor: not-allowed;
-    }
-    .lesson-btn span { font-size: 20px; margin-bottom: 4px; }
-    .hw-section { margin-top: 16px; }
-    .hw-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--muted); }
-    .hw-upload {
-      display: flex; gap: 10px; align-items: center;
-      flex-wrap: wrap;
-    }
-    .hw-upload input[type="file"] {
-      font-size: 13px; flex: 1; min-width: 0;
-    }
-    .hw-upload select {
-      padding: 8px 12px; border-radius: 10px;
-      border: 1.5px solid var(--border);
-      background: var(--gray); font-size: 13px;
-      font-family: inherit; outline: none;
-    }
-    .hw-upload button {
-      padding: 10px 20px; background: var(--yellow);
-      border: none; border-radius: 10px;
-      font-size: 14px; font-weight: 600;
-      cursor: pointer; font-family: inherit;
-      white-space: nowrap;
-    }
-    .hw-list { margin-top: 16px; }
-    .hw-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 0; border-bottom: 1px solid var(--border);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
       font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
     }
-    .hw-item img {
-      width: 60px; height: 60px;
-      object-fit: cover; border-radius: 8px;
-    }
-    .hw-grade {
-      margin-left: auto; font-weight: 700;
-      color: #2e7d32; font-size: 15px;
-    }
-    .hw-grade.pending { color: var(--muted); font-weight: 400; }
   </style>
 </head>
 <body>
@@ -117,64 +95,27 @@
     <a href="/logout" class="logout">Déconnexion</a>
   </div>
 
+  <div class="section-title">Vos cours</div>
+
   <% courses.forEach(course => { %>
-  <div class="course-block">
-    <div class="course-title">📚 <%= course.title %></div>
-
-    <div class="lessons-grid">
-      <% for (let i = 1; i <= 30; i++) { %>
-        <% if (i <= course.lessons_available) { %>
-          <a href="/lesson/<%= course.id %>/<%= i %>" class="lesson-btn open">
-            <span>📖</span>Leçon <%= i %>
-          </a>
-        <% } else { %>
-          <div class="lesson-btn locked">
-            <span>🔒</span>Leçon <%= i %>
-          </div>
-        <% } %>
-      <% } %>
-    </div>
-
-    <div class="hw-section">
-      <h3>📸 Soumettre un devoir</h3>
-      <form action="/homework/upload" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="course_id" value="<%= course.id %>">
-        <div class="hw-upload">
-          <select name="lesson_id" required>
-            <% for (let i = 1; i <= course.lessons_available; i++) { %>
-              <option value="<%= i %>">Leçon <%= i %></option>
-            <% } %>
-          </select>
-          <input type="file" name="photo" accept="image/*" capture="environment" required>
-          <button type="submit">Envoyer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  <div class="hw-section" style="margin-top:24px;">
-      <h3>📋 Mes devoirs soumis</h3>
-      <% if (homeworks && homeworks.filter(h => h.course_id === course.id).length === 0) { %>
-        <p style="color:var(--muted);font-size:14px;margin-top:8px;">Aucun devoir soumis pour ce cours</p>
-      <% } %>
-      <% homeworks.filter(h => h.course_id === course.id).forEach(hw => { %>
-      <div class="hw-item">
-        <a href="/uploads/<%= hw.file_path %>" target="_blank">
-          <img src="/uploads/<%= hw.file_path %>" alt="devoir">
-        </a>
-        <div>
-          <p style="font-size:13px;color:var(--muted);">Leçon <%= hw.lesson_id %> · <%= new Date(hw.submitted_at).toLocaleDateString('fr-FR') %></p>
-          <% if (hw.grade) { %>
-            <p style="font-weight:700;color:#2e7d32;margin-top:4px;">Note : <%= hw.grade %></p>
-            <% if (hw.comment) { %><p style="font-size:13px;color:var(--muted);">💬 <%= hw.comment %></p><% } %>
-          <% } else { %>
-            <p style="font-size:13px;color:var(--muted);margin-top:4px;">⏳ En attente de correction</p>
-          <% } %>
-        </div>
+    <%
+      const completed = parseInt(course.completed) || 0;
+      const total = parseInt(course.total_lessons) || 30;
+      const percent = Math.min(100, Math.round((completed / total) * 100));
+    %>
+    <a href="/cabinet/course/<%= course.id %>" class="course-card">
+      <div class="course-title">📚 <%= course.title %></div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width:<%= percent %>%"></div>
       </div>
-      <% }) %>
-    </div>
-
-  </div>
+      <div class="progress-text">
+        <span><%= completed %> leçon<%= completed !== 1 ? 's' : '' %> complétée<%= completed !== 1 ? 's' : '' %></span>
+        <span><%= percent %>%</span>
+      </div>
+      <div class="card-footer">
+        <button class="btn-go">Accéder au cours →</button>
+      </div>
+    </a>
   <% }) %>
 
 </body>
