@@ -115,6 +115,21 @@ app.post('/register', async (req, res) => {
       `
     });
 
+    await resend.emails.send({
+      from: 'Russian with Masha <noreply@russianwithmasha.online>',
+      to: 'info@native-speech.com',
+      subject: '🎉 Nouvel élève inscrit — ' + name,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+          <h2>Nouvel élève inscrit!</h2>
+          <p><strong>Nom:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Cours:</strong> ${course_id}</p>
+          <p style="margin-top:16px;"><a href="https://russianwithmasha.online/admin">Voir l'administration →</a></p>
+        </div>
+      `
+    });
+
     res.render('register', { courses: coursesResult.rows, error: null, success: 'Inscription réussie! Vérifiez votre email pour confirmer votre compte.' });
   } catch (err) {
     console.error(err);
