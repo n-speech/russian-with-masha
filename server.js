@@ -14,18 +14,9 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -109,9 +100,9 @@ app.post('/register', async (req, res) => {
     );
 
     const verifyUrl = `${process.env.APP_URL}/verify/${token}`;
-    await transporter.sendMail({
-      from: `"Russian with Masha" <${process.env.SMTP_USER}>`,
-      to: email,
+    await resend.emails.send({
+    from: 'Russian with Masha <noreply@russianwithmasha.online>',
+    to: email,
       subject: 'Confirmez votre inscription — Russian with Masha',
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
@@ -399,8 +390,8 @@ app.post('/forgot', async (req, res) => {
       [token, expires, email]
     );
     const resetUrl = `${process.env.APP_URL}/reset/${token}`;
-    await transporter.sendMail({
-      from: `"Russian with Masha" <${process.env.SMTP_USER}>`,
+    await resend.emails.send({
+      from: 'Russian with Masha <noreply@russianwithmasha.online>',
       to: email,
       subject: 'Réinitialisation de mot de passe — Russian with Masha',
       html: `
